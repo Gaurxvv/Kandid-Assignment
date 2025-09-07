@@ -59,7 +59,7 @@ export async function getLeads(filters: LeadFilters, pagination: PaginationParam
   const total = totalResult.count
 
   // Get leads with pagination
-  const leadsData = await db
+  const baseQuery = db
     .select({
       id: leads.id,
       name: leads.name,
@@ -87,9 +87,65 @@ export async function getLeads(filters: LeadFilters, pagination: PaginationParam
     .leftJoin(campaigns, eq(leads.campaignId, campaigns.id))
     .leftJoin(users, eq(leads.userId, users.id))
     .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-    .orderBy(sortOrder === 'asc' ? asc(leads[sortBy as keyof typeof leads]) : desc(leads[sortBy as keyof typeof leads]))
-    .limit(limit)
-    .offset((page - 1) * limit)
+
+  // Add ordering based on sortBy
+  let leadsData
+  switch (sortBy) {
+    case 'id':
+      leadsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(leads.id) : desc(leads.id))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'name':
+      leadsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(leads.name) : desc(leads.name))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'email':
+      leadsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(leads.email) : desc(leads.email))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'company':
+      leadsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(leads.company) : desc(leads.company))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'source':
+      leadsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(leads.source) : desc(leads.source))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'status':
+      leadsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(leads.status) : desc(leads.status))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'lastContacted':
+      leadsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(leads.lastContacted) : desc(leads.lastContacted))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'updatedAt':
+      leadsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(leads.updatedAt) : desc(leads.updatedAt))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    default:
+      // Default to createdAt desc
+      leadsData = await baseQuery
+        .orderBy(desc(leads.createdAt))
+        .limit(limit)
+        .offset((page - 1) * limit)
+  }
 
   return {
     data: leadsData,
@@ -158,7 +214,18 @@ export async function createLead(leadData: {
   return newLead
 }
 
-export async function updateLead(id: string, leadData: Partial<typeof leadData>) {
+export async function updateLead(id: string, leadData: Partial<{
+  name: string
+  email: string
+  phone?: string
+  company: string
+  source: string
+  status?: string
+  campaignId?: string
+  userId: string
+  notes?: string
+  customFields?: any
+}>) {
   const [updatedLead] = await db
     .update(leads)
     .set({

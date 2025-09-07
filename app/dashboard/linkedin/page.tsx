@@ -6,7 +6,20 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Linkedin, Plus, Settings, Users, MessageSquare, TrendingUp, CheckCircle, AlertCircle, Clock } from 'lucide-react'
 
-const mockAccounts = [
+type AccountStatus = 'active' | 'paused' | 'error'
+
+const mockAccounts: Array<{
+  id: string
+  name: string
+  email: string
+  profileUrl: string
+  status: AccountStatus
+  connections: number
+  messagesSent: number
+  responseRate: number
+  lastActivity: string
+  avatar: null
+}> = [
   {
     id: '1',
     name: 'John Smith',
@@ -45,7 +58,7 @@ const mockAccounts = [
   }
 ]
 
-const statusConfig = {
+const statusConfig: Record<AccountStatus, { variant: 'success' | 'secondary' | 'destructive', label: string, icon: any }> = {
   active: { variant: 'success' as const, label: 'Active', icon: CheckCircle },
   paused: { variant: 'secondary' as const, label: 'Paused', icon: Clock },
   error: { variant: 'destructive' as const, label: 'Error', icon: AlertCircle },

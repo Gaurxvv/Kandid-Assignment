@@ -7,7 +7,18 @@ import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MessageSquare, Search, Filter, Plus, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 
-const mockMessages = [
+type MessageStatus = 'unread' | 'read' | 'replied' | 'converted'
+
+const mockMessages: Array<{
+  id: string
+  leadName: string
+  leadEmail: string
+  company: string
+  lastMessage: string
+  timestamp: string
+  status: MessageStatus
+  campaign: string
+}> = [
   {
     id: '1',
     leadName: 'Sarah Johnson',
@@ -50,7 +61,7 @@ const mockMessages = [
   }
 ]
 
-const statusConfig = {
+const statusConfig: Record<MessageStatus, { variant: 'destructive' | 'secondary' | 'default' | 'success', label: string, icon: any }> = {
   unread: { variant: 'destructive' as const, label: 'Unread', icon: AlertCircle },
   read: { variant: 'secondary' as const, label: 'Read', icon: CheckCircle },
   replied: { variant: 'default' as const, label: 'Replied', icon: MessageSquare },
@@ -67,10 +78,6 @@ export default function MessagesPage() {
             Manage your conversations and message templates
           </p>
         </div>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          New Message
-        </Button>
       </div>
 
       {/* Stats Cards */}

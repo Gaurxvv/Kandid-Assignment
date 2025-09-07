@@ -27,7 +27,7 @@ export function useCampaigns(params: PaginationParams) {
             campaign.status === 'paused' || campaign.status === 'completed'
           )
         } else {
-          filteredCampaigns = filteredCampaigns.filter(campaign => campaign.status === params.filters.status)
+          filteredCampaigns = filteredCampaigns.filter(campaign => campaign.status === params.filters?.status)
         }
       }
       

@@ -47,7 +47,7 @@ export async function getCampaigns(filters: CampaignFilters, pagination: Paginat
   const total = totalResult.count
 
   // Get campaigns with pagination
-  const campaignsData = await db
+  const baseQuery = db
     .select({
       id: campaigns.id,
       name: campaigns.name,
@@ -67,9 +67,59 @@ export async function getCampaigns(filters: CampaignFilters, pagination: Paginat
     .from(campaigns)
     .leftJoin(users, eq(campaigns.userId, users.id))
     .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-    .orderBy(sortOrder === 'asc' ? asc(campaigns[sortBy as keyof typeof campaigns]) : desc(campaigns[sortBy as keyof typeof campaigns]))
-    .limit(limit)
-    .offset((page - 1) * limit)
+
+  // Add ordering based on sortBy
+  let campaignsData
+  switch (sortBy) {
+    case 'id':
+      campaignsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(campaigns.id) : desc(campaigns.id))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'name':
+      campaignsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(campaigns.name) : desc(campaigns.name))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'status':
+      campaignsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(campaigns.status) : desc(campaigns.status))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'totalLeads':
+      campaignsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(campaigns.totalLeads) : desc(campaigns.totalLeads))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'responseRate':
+      campaignsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(campaigns.responseRate) : desc(campaigns.responseRate))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'conversionRate':
+      campaignsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(campaigns.conversionRate) : desc(campaigns.conversionRate))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'updatedAt':
+      campaignsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(campaigns.updatedAt) : desc(campaigns.updatedAt))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    default:
+      // Default to createdAt desc
+      campaignsData = await baseQuery
+        .orderBy(desc(campaigns.createdAt))
+        .limit(limit)
+        .offset((page - 1) * limit)
+  }
 
   return {
     data: campaignsData,
@@ -123,7 +173,12 @@ export async function createCampaign(campaignData: {
   return newCampaign
 }
 
-export async function updateCampaign(id: string, campaignData: Partial<typeof campaignData>) {
+export async function updateCampaign(id: string, campaignData: Partial<{
+  name: string
+  description?: string
+  status?: string
+  userId: string
+}>) {
   const [updatedCampaign] = await db
     .update(campaigns)
     .set({

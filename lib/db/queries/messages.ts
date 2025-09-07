@@ -1,6 +1,6 @@
 import { db } from '../index'
 import { messages, leads, users } from '../schema'
-import { eq, and, desc, asc, like, or, count } from 'drizzle-orm'
+import { eq, and, desc, asc, like, or, count, sql } from 'drizzle-orm'
 
 export interface MessageFilters {
   search?: string
@@ -53,7 +53,7 @@ export async function getMessages(filters: MessageFilters, pagination: Paginatio
   const total = totalResult.count
 
   // Get messages with pagination
-  const messagesData = await db
+  const baseQuery = db
     .select({
       id: messages.id,
       content: messages.content,
@@ -78,9 +78,59 @@ export async function getMessages(filters: MessageFilters, pagination: Paginatio
     .leftJoin(leads, eq(messages.leadId, leads.id))
     .leftJoin(users, eq(messages.userId, users.id))
     .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-    .orderBy(sortOrder === 'asc' ? asc(messages[sortBy as keyof typeof messages]) : desc(messages[sortBy as keyof typeof messages]))
-    .limit(limit)
-    .offset((page - 1) * limit)
+
+  // Add ordering based on sortBy
+  let messagesData
+  switch (sortBy) {
+    case 'id':
+      messagesData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(messages.id) : desc(messages.id))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'content':
+      messagesData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(messages.content) : desc(messages.content))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'type':
+      messagesData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(messages.type) : desc(messages.type))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'status':
+      messagesData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(messages.status) : desc(messages.status))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'sentAt':
+      messagesData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(messages.sentAt) : desc(messages.sentAt))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'readAt':
+      messagesData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(messages.readAt) : desc(messages.readAt))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'createdAt':
+      messagesData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(messages.createdAt) : desc(messages.createdAt))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    default:
+      // Default to sentAt desc
+      messagesData = await baseQuery
+        .orderBy(desc(messages.sentAt))
+        .limit(limit)
+        .offset((page - 1) * limit)
+  }
 
   return {
     data: messagesData,
@@ -141,7 +191,13 @@ export async function createMessage(messageData: {
   return newMessage
 }
 
-export async function updateMessage(id: string, messageData: Partial<typeof messageData>) {
+export async function updateMessage(id: string, messageData: Partial<{
+  leadId: string
+  userId: string
+  content: string
+  type?: string
+  status?: string
+}>) {
   const [updatedMessage] = await db
     .update(messages)
     .set({

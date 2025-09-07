@@ -19,16 +19,16 @@ async function checkTables() {
     for (const table of tables) {
       try {
         const result = await db.execute(`SELECT COUNT(*) as count FROM ${table}`)
-        const count = result.rows?.[0]?.count || result[0]?.count || 'unknown'
+        const count = (result as any)?.[0]?.count || 'unknown'
         console.log(`✅ ${table} table exists (${count} rows)`)
       } catch (error) {
-        console.log(`❌ ${table} table error:`, error.message)
+        console.log(`❌ ${table} table error:`, error instanceof Error ? error.message : String(error))
       }
     }
     
   } catch (error) {
     console.log('❌ Database connection failed:')
-    console.log('Error message:', error.message)
+    console.log('Error message:', error instanceof Error ? error.message : String(error))
     console.log('Full error:', error)
   }
 }

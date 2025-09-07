@@ -1,6 +1,6 @@
 import { db } from '../index'
 import { linkedinAccounts, users } from '../schema'
-import { eq, and, desc, asc, like, or, count } from 'drizzle-orm'
+import { eq, and, desc, asc, like, or, count, sql } from 'drizzle-orm'
 
 export interface LinkedInAccountFilters {
   search?: string
@@ -48,7 +48,7 @@ export async function getLinkedInAccounts(filters: LinkedInAccountFilters, pagin
   const total = totalResult.count
 
   // Get LinkedIn accounts with pagination
-  const accountsData = await db
+  const baseQuery = db
     .select({
       id: linkedinAccounts.id,
       name: linkedinAccounts.name,
@@ -70,9 +70,71 @@ export async function getLinkedInAccounts(filters: LinkedInAccountFilters, pagin
     .from(linkedinAccounts)
     .leftJoin(users, eq(linkedinAccounts.userId, users.id))
     .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-    .orderBy(sortOrder === 'asc' ? asc(linkedinAccounts[sortBy as keyof typeof linkedinAccounts]) : desc(linkedinAccounts[sortBy as keyof typeof linkedinAccounts]))
-    .limit(limit)
-    .offset((page - 1) * limit)
+
+  // Add ordering based on sortBy
+  let accountsData
+  switch (sortBy) {
+    case 'id':
+      accountsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(linkedinAccounts.id) : desc(linkedinAccounts.id))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'name':
+      accountsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(linkedinAccounts.name) : desc(linkedinAccounts.name))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'email':
+      accountsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(linkedinAccounts.email) : desc(linkedinAccounts.email))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'status':
+      accountsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(linkedinAccounts.status) : desc(linkedinAccounts.status))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'connections':
+      accountsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(linkedinAccounts.connections) : desc(linkedinAccounts.connections))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'messagesSent':
+      accountsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(linkedinAccounts.messagesSent) : desc(linkedinAccounts.messagesSent))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'responseRate':
+      accountsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(linkedinAccounts.responseRate) : desc(linkedinAccounts.responseRate))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'lastActivity':
+      accountsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(linkedinAccounts.lastActivity) : desc(linkedinAccounts.lastActivity))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'updatedAt':
+      accountsData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(linkedinAccounts.updatedAt) : desc(linkedinAccounts.updatedAt))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    default:
+      // Default to createdAt desc
+      accountsData = await baseQuery
+        .orderBy(desc(linkedinAccounts.createdAt))
+        .limit(limit)
+        .offset((page - 1) * limit)
+  }
 
   return {
     data: accountsData,
@@ -135,7 +197,16 @@ export async function createLinkedInAccount(accountData: {
   return newAccount
 }
 
-export async function updateLinkedInAccount(id: string, accountData: Partial<typeof accountData>) {
+export async function updateLinkedInAccount(id: string, accountData: Partial<{
+  userId: string
+  name: string
+  email: string
+  profileUrl?: string
+  status?: string
+  connections?: number
+  messagesSent?: number
+  responseRate?: string
+}>) {
   const [updatedAccount] = await db
     .update(linkedinAccounts)
     .set({

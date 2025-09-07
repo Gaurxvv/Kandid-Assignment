@@ -48,7 +48,7 @@ export async function getUsers(filters: UserFilters, pagination: PaginationParam
   const total = totalResult.count
 
   // Get users with pagination
-  const usersData = await db
+  const baseQuery = db
     .select({
       id: users.id,
       email: users.email,
@@ -61,9 +61,53 @@ export async function getUsers(filters: UserFilters, pagination: PaginationParam
     })
     .from(users)
     .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-    .orderBy(sortOrder === 'asc' ? asc(users[sortBy as keyof typeof users]) : desc(users[sortBy as keyof typeof users]))
-    .limit(limit)
-    .offset((page - 1) * limit)
+
+  // Add ordering based on sortBy
+  let usersData
+  switch (sortBy) {
+    case 'id':
+      usersData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(users.id) : desc(users.id))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'email':
+      usersData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(users.email) : desc(users.email))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'name':
+      usersData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(users.name) : desc(users.name))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'role':
+      usersData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(users.role) : desc(users.role))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'isActive':
+      usersData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(users.isActive) : desc(users.isActive))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    case 'updatedAt':
+      usersData = await baseQuery
+        .orderBy(sortOrder === 'asc' ? asc(users.updatedAt) : desc(users.updatedAt))
+        .limit(limit)
+        .offset((page - 1) * limit)
+      break
+    default:
+      // Default to createdAt desc
+      usersData = await baseQuery
+        .orderBy(desc(users.createdAt))
+        .limit(limit)
+        .offset((page - 1) * limit)
+  }
 
   return {
     data: usersData,
@@ -122,7 +166,13 @@ export async function createUser(userData: {
   return newUser
 }
 
-export async function updateUser(id: string, userData: Partial<typeof userData>) {
+export async function updateUser(id: string, userData: Partial<{
+  email: string
+  name: string
+  avatar?: string
+  role?: string
+  isActive?: boolean
+}>) {
   const [updatedUser] = await db
     .update(users)
     .set({
