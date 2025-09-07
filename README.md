@@ -138,18 +138,6 @@ Currently uses mock data arrays for development. The architecture is designed to
 2. **Zustand** manages UI state and filters
 3. **React Query** provides optimistic updates and background refetching
 
-## Customization
-
-### Theming
-The app uses CSS variables for theming. Modify `app/globals.css` to customize colors:
-
-```css
-:root {
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  /* ... other variables */
-}
-```
 
 ### Font
 Poppins is set as the global default font. To change:
@@ -166,46 +154,3 @@ All UI components are built with shadcn/ui and can be customized by modifying th
 1. Push your code to GitHub
 2. Connect your repository to Vercel
 3. Deploy automatically
-
-### Other Platforms
-The app can be deployed to any platform that supports Next.js:
-- Netlify
-- Railway
-- AWS Amplify
-- DigitalOcean App Platform
-
-## Future Enhancements
-
-### Planned Features
-- [ ] Authentication with Better Auth
-- [ ] Database integration with Drizzle ORM
-- [ ] Real-time notifications
-- [ ] Advanced analytics charts
-- [ ] Email integration
-- [ ] API endpoints
-- [ ] User roles and permissions
-- [ ] Data export functionality
-
-### Integration Ready
-The codebase is structured to easily integrate:
-- **Authentication**: Better Auth provider ready
-- **Database**: Drizzle ORM schemas can be added
-- **API Routes**: Next.js API routes for backend
-- **Real-time**: WebSocket integration points
-- **Email**: Email service integration
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License.
-
-## Support
-
-For support or questions, please open an issue in the repository.
