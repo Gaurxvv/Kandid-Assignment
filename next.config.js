@@ -8,6 +8,7 @@ const nextConfig = {
   },
   env: {
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL,
   },
   async headers() {
     return [
