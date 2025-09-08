@@ -19,7 +19,15 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirect') || '/dashboard'
+  const redirectTo = (() => {
+    const raw = (searchParams.get('redirect') || '/dashboard').trim()
+    // Ensure internal path and normalize common typos like "/Fdashboard"
+    if (!raw.startsWith('/')) return '/dashboard'
+    const lower = raw.toLowerCase()
+    if (lower === '/fdashboard') return '/dashboard'
+    if (!lower.startsWith('/dashboard')) return '/dashboard'
+    return raw
+  })()
   const { signIn, refreshSession } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,8 +38,10 @@ function LoginForm() {
     try {
       console.log('Attempting to sign in with:', email)
       await signIn(email, password)
+      // Ensure auth state and cookies are up-to-date before navigating
+      await refreshSession()
       console.log('Sign in successful, redirecting to:', redirectTo)
-      router.push(redirectTo)
+      router.replace(redirectTo)
     } catch (err) {
       console.error('Sign in error:', err)
       setError(err instanceof Error ? err.message : 'An error occurred')
