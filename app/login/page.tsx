@@ -46,6 +46,9 @@ function LoginForm() {
       
       console.log('✅ Login: Sign in successful, redirecting to:', redirectTo)
       
+      // Add a small delay to ensure cookie is fully processed
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
       // Use window.location.href for a hard redirect to ensure cookies are sent
       // This bypasses client-side routing and forces a full page reload
       window.location.href = redirectTo

@@ -55,6 +55,10 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
     cookieName: "better-auth.session_token",
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 5, // 5 minutes
+    },
   },
   
   // Cookie configuration for production
@@ -66,7 +70,7 @@ export const auth = betterAuth({
       sameSite: "lax", // Allows top-level navigation
       path: "/", // Available on all routes
       maxAge: 60 * 60 * 24 * 7, // 7 days
-      domain: isProduction ? ".vercel.app" : undefined, // Allow subdomains in production
+      // Remove domain restriction - let it use the current domain
     },
   },
   
