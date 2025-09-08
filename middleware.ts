@@ -19,11 +19,20 @@ export function middleware(request: NextRequest) {
   // Get the session token from cookies
   const sessionToken = request.cookies.get('better-auth.session_token')?.value
 
+  // Debug logging for production
+  console.log('Middleware check:', {
+    pathname,
+    hasSessionToken: !!sessionToken,
+    cookies: request.cookies.getAll().map(c => c.name),
+    userAgent: request.headers.get('user-agent')?.substring(0, 50)
+  })
+
   // If no session token, redirect to login
   if (!sessionToken) {
     const loginUrl = new URL('/login', request.url)
     // Add the current path as a redirect parameter so we can redirect back after login
     loginUrl.searchParams.set('redirect', pathname)
+    console.log('Redirecting to login:', loginUrl.toString())
     return NextResponse.redirect(loginUrl)
   }
 
