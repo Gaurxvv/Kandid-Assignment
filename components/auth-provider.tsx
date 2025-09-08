@@ -38,16 +38,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       try {
+        console.log('AuthProvider: Initializing auth...')
         const { data } = await authClient.getSession()
+        console.log('AuthProvider: Session data:', { hasUser: !!data?.user, hasSession: !!data?.session })
         if (data?.user) {
           setUser(data.user)
           setSession({
             token: data.session?.token || '',
             user: data.user
           })
+          console.log('AuthProvider: User set successfully')
         } else {
           setUser(null)
           setSession(null)
+          console.log('AuthProvider: No user found')
         }
       } catch (error) {
         console.error('Auth initialization error:', error)
@@ -55,6 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(null)
       } finally {
         setLoading(false)
+        console.log('AuthProvider: Initialization complete')
       }
     }
 

@@ -41,7 +41,10 @@ function LoginForm() {
       // Ensure auth state and cookies are up-to-date before navigating
       await refreshSession()
       console.log('Sign in successful, redirecting to:', redirectTo)
-      router.replace(redirectTo)
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        router.replace(redirectTo)
+      }, 100)
     } catch (err) {
       console.error('Sign in error:', err)
       setError(err instanceof Error ? err.message : 'An error occurred')
