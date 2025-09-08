@@ -46,10 +46,9 @@ function LoginForm() {
       
       console.log('✅ Login: Sign in successful, redirecting to:', redirectTo)
       
-      // Small delay to ensure everything is properly set
-      setTimeout(() => {
-        router.push(redirectTo)
-      }, 200)
+      // Use window.location.href for a hard redirect to ensure cookies are sent
+      // This bypasses client-side routing and forces a full page reload
+      window.location.href = redirectTo
       
     } catch (err) {
       console.error('🚨 Login: Sign in error:', err)
@@ -77,9 +76,8 @@ function LoginForm() {
       
       console.log('✅ Login: Google sign in successful, redirecting to:', redirectTo)
       
-      setTimeout(() => {
-        router.push(redirectTo)
-      }, 200)
+      // Use window.location.href for a hard redirect to ensure cookies are sent
+      window.location.href = redirectTo
       
     } catch (err) {
       console.error('🚨 Login: Google sign in error:', err)

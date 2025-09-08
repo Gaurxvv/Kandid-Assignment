@@ -26,16 +26,15 @@ export function middleware(request: NextRequest) {
   // Get session token from cookies
   const sessionToken = request.cookies.get('better-auth.session_token')?.value
   
-  // Debug logging (only in development or when debugging)
-  if (process.env.NODE_ENV === 'development' || process.env.DEBUG_MIDDLEWARE === 'true') {
-    console.log('🔍 Middleware Debug:', {
-      pathname,
-      hasSessionToken: !!sessionToken,
-      tokenPreview: sessionToken ? `${sessionToken.substring(0, 10)}...` : 'none',
-      allCookies: request.cookies.getAll().map(c => c.name),
-      userAgent: request.headers.get('user-agent')?.substring(0, 30)
-    })
-  }
+  // Debug logging for production debugging
+  console.log('🔍 Middleware Debug:', {
+    pathname,
+    hasSessionToken: !!sessionToken,
+    tokenPreview: sessionToken ? `${sessionToken.substring(0, 10)}...` : 'none',
+    allCookies: request.cookies.getAll().map(c => `${c.name}=${c.value.substring(0, 10)}...`),
+    userAgent: request.headers.get('user-agent')?.substring(0, 30),
+    timestamp: new Date().toISOString()
+  })
   
   // If no session token, redirect to login
   if (!sessionToken) {
