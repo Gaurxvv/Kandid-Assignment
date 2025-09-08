@@ -2,32 +2,86 @@ import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { db } from "./db"
 
+// Get the base URL for the current environment
+const getBaseURL = () => {
+  // Always use environment variables first for consistency
+  const envURL = process.env.BETTER_AUTH_URL || 
+                 process.env.NEXTAUTH_URL || 
+                 process.env.NEXT_PUBLIC_APP_URL
+  
+  if (envURL) {
+    return envURL
+  }
+  
+  // Fallback to window.location.origin only in browser
+  if (typeof window !== 'undefined') {
+    return window.location.origin
+  }
+  
+  // Final fallback for server-side
+  return "http://localhost:3000"
+}
+
+const baseURL = getBaseURL()
+const isProduction = process.env.NODE_ENV === "production"
+
+console.log('🔧 Better Auth Config:', {
+  baseURL,
+  isProduction,
+  nodeEnv: process.env.NODE_ENV
+})
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
+  
+  // Email/Password authentication
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
   },
+  
+  // Social providers
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     },
   },
+  
+  // Session configuration
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
-    cookieCache: {
-      enabled: true,
-      maxAge: 60 * 5, // 5 minutes
-    },
     cookieName: "better-auth.session_token",
   },
-  advanced: {
-    generateId: () => crypto.randomUUID(),
+  
+  // Cookie configuration for production
+  cookies: {
+    sessionToken: {
+      name: "better-auth.session_token",
+      httpOnly: true,
+      secure: isProduction, // Only secure in production (HTTPS)
+      sameSite: "lax", // Allows top-level navigation
+      path: "/", // Available on all routes
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      domain: isProduction ? ".vercel.app" : undefined, // Allow subdomains in production
+    },
   },
+  
+  // Base URL and trusted origins
+  baseURL,
+  trustedOrigins: [
+    baseURL,
+    "https://kandid-assignment-eta.vercel.app",
+    "http://localhost:3000"
+  ],
+  
+  // Secret for signing tokens
+  secret: process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET,
+  
+  // User configuration
   user: {
     additionalFields: {
       role: {
@@ -36,24 +90,15 @@ export const auth = betterAuth({
       },
     },
   },
-  secret: process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-  trustedOrigins: [
-    process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-    "https://kandid-assignment-eta.vercel.app"
-  ],
-  logger: {
-    level: "debug",
+  
+  // Advanced settings
+  advanced: {
+    generateId: () => crypto.randomUUID(),
   },
-  cookies: {
-    sessionToken: {
-      name: "better-auth.session_token",
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    },
+  
+  // Logging for debugging
+  logger: {
+    level: isProduction ? "error" : "debug",
   },
 })
 

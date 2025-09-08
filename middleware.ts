@@ -2,41 +2,52 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  // Get the pathname of the request
   const { pathname } = request.nextUrl
-
+  
   // Define public routes that don't require authentication
-  const publicRoutes = ['/login', '/signup', '/api/auth']
+  const publicRoutes = [
+    '/login', 
+    '/signup', 
+    '/api/auth',
+    '/_next', // Next.js static files
+    '/favicon.ico'
+  ]
   
-  // Check if the current path is a public route
-  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
+  // Check if current path is public
+  const isPublicRoute = publicRoutes.some(route => 
+    pathname.startsWith(route)
+  )
   
-  // If it's a public route, allow access
+  // Allow public routes
   if (isPublicRoute) {
     return NextResponse.next()
   }
-
-  // Get the session token from cookies
+  
+  // Get session token from cookies
   const sessionToken = request.cookies.get('better-auth.session_token')?.value
-
-  // Debug logging for production
-  console.log('Middleware check:', {
-    pathname,
-    hasSessionToken: !!sessionToken,
-    cookies: request.cookies.getAll().map(c => c.name),
-    userAgent: request.headers.get('user-agent')?.substring(0, 50)
-  })
-
+  
+  // Debug logging (only in development or when debugging)
+  if (process.env.NODE_ENV === 'development' || process.env.DEBUG_MIDDLEWARE === 'true') {
+    console.log('🔍 Middleware Debug:', {
+      pathname,
+      hasSessionToken: !!sessionToken,
+      tokenPreview: sessionToken ? `${sessionToken.substring(0, 10)}...` : 'none',
+      allCookies: request.cookies.getAll().map(c => c.name),
+      userAgent: request.headers.get('user-agent')?.substring(0, 30)
+    })
+  }
+  
   // If no session token, redirect to login
   if (!sessionToken) {
     const loginUrl = new URL('/login', request.url)
-    // Add the current path as a redirect parameter so we can redirect back after login
     loginUrl.searchParams.set('redirect', pathname)
-    console.log('Redirecting to login:', loginUrl.toString())
+    
+    console.log('🚫 No session token, redirecting to:', loginUrl.toString())
     return NextResponse.redirect(loginUrl)
   }
-
-  // If session token exists, allow access
+  
+  // Session token exists, allow access
+  console.log('✅ Session token found, allowing access to:', pathname)
   return NextResponse.next()
 }
 
@@ -45,11 +56,11 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
+     * - api/auth (authentication API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api/auth|_next/static|_next/image|favicon.ico).*)',
   ],
 }

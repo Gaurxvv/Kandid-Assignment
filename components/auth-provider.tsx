@@ -3,17 +3,17 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { authClient } from '@/lib/auth-client'
 
-type User = {
+interface User {
   id: string
   email: string
   name: string
-  image?: string | null | undefined
+  image?: string | null
   emailVerified: boolean
   createdAt: Date
   updatedAt: Date
 }
 
-type Session = {
+interface Session {
   token: string
   user: User
 }
@@ -35,31 +35,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Initialize authentication state
   useEffect(() => {
     const initAuth = async () => {
       try {
-        console.log('AuthProvider: Initializing auth...')
+        console.log('🔄 AuthProvider: Initializing...')
         const { data } = await authClient.getSession()
-        console.log('AuthProvider: Session data:', { hasUser: !!data?.user, hasSession: !!data?.session })
+        
         if (data?.user) {
+          console.log('✅ AuthProvider: User found:', data.user.email)
           setUser(data.user)
           setSession({
             token: data.session?.token || '',
             user: data.user
           })
-          console.log('AuthProvider: User set successfully')
         } else {
+          console.log('❌ AuthProvider: No user found')
           setUser(null)
           setSession(null)
-          console.log('AuthProvider: No user found')
         }
       } catch (error) {
-        console.error('Auth initialization error:', error)
+        console.error('🚨 AuthProvider: Initialization error:', error)
         setUser(null)
         setSession(null)
       } finally {
         setLoading(false)
-        console.log('AuthProvider: Initialization complete')
+        console.log('🏁 AuthProvider: Initialization complete')
       }
     }
 
@@ -67,29 +68,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    console.log('AuthProvider: Starting sign in process')
+    console.log('🔐 AuthProvider: Starting sign in for:', email)
+    
     const { data, error } = await authClient.signIn.email({
       email,
       password,
     })
 
-    console.log('AuthProvider: Sign in response:', { data, error })
-
     if (error) {
+      console.error('🚨 AuthProvider: Sign in error:', error)
       throw new Error(error.message)
     }
 
     if (data?.user) {
-      console.log('AuthProvider: Setting user and session:', data.user)
+      console.log('✅ AuthProvider: Sign in successful for:', data.user.email)
       setUser(data.user)
       setSession({
         token: data.token || '',
         user: data.user
       })
+    } else {
+      throw new Error('Sign in failed - no user data returned')
     }
   }
 
   const signUp = async (email: string, password: string, name: string) => {
+    console.log('📝 AuthProvider: Starting sign up for:', email)
+    
     const { data, error } = await authClient.signUp.email({
       email,
       password,
@@ -97,46 +102,89 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     if (error) {
+      console.error('🚨 AuthProvider: Sign up error:', error)
       throw new Error(error.message)
     }
 
     if (data?.user) {
+      console.log('✅ AuthProvider: Sign up successful for:', data.user.email)
       setUser(data.user)
       setSession({
         token: data.token || '',
         user: data.user
       })
+    } else {
+      throw new Error('Sign up failed - no user data returned')
     }
   }
 
   const signOut = async () => {
-    await authClient.signOut()
-    setUser(null)
-    setSession(null)
+    console.log('🚪 AuthProvider: Signing out...')
+    
+    try {
+      // Clear local state first
+      setUser(null)
+      setSession(null)
+      
+      // Then call the API to clear server-side session
+      await authClient.signOut()
+      
+      console.log('✅ AuthProvider: Sign out successful')
+      
+      // Redirect to login page after successful logout
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login'
+      }
+    } catch (error) {
+      console.error('🚨 AuthProvider: Sign out error:', error)
+      // Still clear local state even if API call fails
+      setUser(null)
+      setSession(null)
+      
+      // Redirect to login page even if API call fails
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login'
+      }
+    }
   }
 
   const refreshSession = async () => {
+    console.log('🔄 AuthProvider: Refreshing session...')
+    
     try {
       const { data } = await authClient.getSession()
+      
       if (data?.user) {
+        console.log('✅ AuthProvider: Session refreshed for:', data.user.email)
         setUser(data.user)
         setSession({
           token: data.session?.token || '',
           user: data.user
         })
       } else {
+        console.log('❌ AuthProvider: No user in refreshed session')
         setUser(null)
         setSession(null)
       }
     } catch (error) {
-      console.error('Session refresh error:', error)
+      console.error('🚨 AuthProvider: Session refresh error:', error)
       setUser(null)
       setSession(null)
     }
   }
 
+  const value: AuthContextType = {
+    user,
+    session,
+    loading,
+    signIn,
+    signUp,
+    signOut,
+    refreshSession,
+  }
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, refreshSession }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )

@@ -17,18 +17,18 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { signIn, refreshSession } = useAuth()
+
+  // Get redirect URL from search params, default to dashboard
   const redirectTo = (() => {
-    const raw = (searchParams.get('redirect') || '/dashboard').trim()
-    // Ensure internal path and normalize common typos like "/Fdashboard"
+    const raw = searchParams.get('redirect') || '/dashboard'
+    // Ensure it's a valid internal path
     if (!raw.startsWith('/')) return '/dashboard'
-    const lower = raw.toLowerCase()
-    if (lower === '/fdashboard') return '/dashboard'
-    if (!lower.startsWith('/dashboard')) return '/dashboard'
     return raw
   })()
-  const { signIn, refreshSession } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,18 +36,24 @@ function LoginForm() {
     setLoading(true)
 
     try {
-      console.log('Attempting to sign in with:', email)
+      console.log('🔐 Login: Attempting sign in for:', email)
+      
+      // Sign in
       await signIn(email, password)
-      // Ensure auth state and cookies are up-to-date before navigating
+      
+      // Refresh session to ensure cookie is set
       await refreshSession()
-      console.log('Sign in successful, redirecting to:', redirectTo)
-      // Small delay to ensure auth state is properly set
+      
+      console.log('✅ Login: Sign in successful, redirecting to:', redirectTo)
+      
+      // Small delay to ensure everything is properly set
       setTimeout(() => {
-        router.replace(redirectTo)
-      }, 100)
+        router.push(redirectTo)
+      }, 200)
+      
     } catch (err) {
-      console.error('Sign in error:', err)
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      console.error('🚨 Login: Sign in error:', err)
+      setError(err instanceof Error ? err.message : 'An error occurred during sign in')
     } finally {
       setLoading(false)
     }
@@ -58,17 +64,26 @@ function LoginForm() {
     setLoading(true)
 
     try {
-      // For social sign-in, we need to use the auth-client directly
-      // as it handles the OAuth flow
+      console.log('🔐 Login: Attempting Google sign in')
+      
+      // Import auth client for social sign in
       const { signIn: authClientSignIn } = await import('@/lib/auth-client')
       await authClientSignIn.social({
         provider: 'google',
       })
-      // Refresh the session to update the auth state
+      
+      // Refresh session
       await refreshSession()
-      router.push(redirectTo)
+      
+      console.log('✅ Login: Google sign in successful, redirecting to:', redirectTo)
+      
+      setTimeout(() => {
+        router.push(redirectTo)
+      }, 200)
+      
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      console.error('🚨 Login: Google sign in error:', err)
+      setError(err instanceof Error ? err.message : 'An error occurred during Google sign in')
     } finally {
       setLoading(false)
     }
@@ -114,6 +129,7 @@ function LoginForm() {
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
                     required
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -130,6 +146,7 @@ function LoginForm() {
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10"
                     required
+                    disabled={loading}
                   />
                   <Button
                     type="button"
@@ -137,6 +154,7 @@ function LoginForm() {
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
+                    disabled={loading}
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4 text-gray-400" />
@@ -208,7 +226,11 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    }>
       <LoginForm />
     </Suspense>
   )
